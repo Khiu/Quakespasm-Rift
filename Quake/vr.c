@@ -315,17 +315,17 @@ qboolean VR_Enable()
 	UINT ovr_audio_id;
 
 	if( ovr_Initialize(NULL) != ovrSuccess ) {
-		Con_Printf("Failed to Initialize Oculus SDK");
+		Con_Printf("Failed to Initialize Oculus SDK\n");
 		return false;
 	}
 
 	if( ovr_Create(&session, &luid) != ovrSuccess ) {
-		Con_Printf("Failed to get HMD");
+		Con_Printf("Failed to get HMD\n");
 		return false;
 	}
 
 	if( !InitOpenGLExtensions() ) {
-		Con_Printf("Failed to initialize OpenGL extensions");
+		Con_Printf("Failed to initialize OpenGL extensions\n");
 		return false;
 	}
 	
@@ -477,6 +477,33 @@ void VR_UpdateScreenContent()
 	pose_time = ovr_GetTimeInSeconds();
 	hmdState = ovr_GetTrackingState(session, ftiming, false);
 
+	// Khiu - show controller data on screen
+	SCR_CenterPrint("TEST_CENTER");
+	Sys_Printf("TEST_SYS");
+
+	ovrPosef         handPoses[2];
+	ovrInputState    inputState;
+
+	handPoses[ovrHand_Left] = hmdState.HandPoses[ovrHand_Left].ThePose;
+	handPoses[ovrHand_Right] = hmdState.HandPoses[ovrHand_Right].ThePose;
+
+	// Left controller orientation
+	Con_Printf("Left Orientation W: %f ", handPoses[ovrHand_Left].Orientation.w);
+	Con_Printf("Left Orientation X: %f ", handPoses[ovrHand_Left].Orientation.x);
+	Con_Printf("Left Orientation Y: %f ", handPoses[ovrHand_Left].Orientation.y);
+	Con_Printf("Left Orientation Z: %f ", handPoses[ovrHand_Left].Orientation.z);
+	Con_Printf("Left Position X: %f ", handPoses[ovrHand_Left].Position.x);
+	Con_Printf("Left Position Y: %f ", handPoses[ovrHand_Left].Position.y);
+	Con_Printf("Left Position Z: %f ", handPoses[ovrHand_Left].Position.z);
+
+	// Right controller
+	Con_Printf("Left Orientation W: %f ", handPoses[ovrHand_Right].Orientation.w);
+	Con_Printf("Left Orientation X: %f ", handPoses[ovrHand_Right].Orientation.x);
+	Con_Printf("Left Orientation Y: %f ", handPoses[ovrHand_Right].Orientation.y);
+	Con_Printf("Left Orientation Z: %f ", handPoses[ovrHand_Right].Orientation.z);
+	Con_Printf("Left Position X: %f ", handPoses[ovrHand_Right].Position.x);
+	Con_Printf("Left Position Y: %f ", handPoses[ovrHand_Right].Position.y);
+	Con_Printf("Left Position Z: %f ", handPoses[ovrHand_Right].Position.z);
 
 	// Calculate HMD angles and blend with input angles based on current aim mode
 	QuatToYawPitchRoll(hmdState.HeadPose.ThePose.Orientation, orientation);
