@@ -550,7 +550,9 @@ void VR_UpdateScreenContent()
 			cl.viewent.angles[PITCH] = controllerOrientation[PITCH];
 			cl.viewent.angles[ROLL] = controllerOrientation[ROLL];
 			
-			//VectorCopy(cl.viewent.angles, cl.aimangles);
+			VectorCopy(cl.viewent.angles, cl.aimangles);
+
+			
 
 			// set cl.viewent.previousxxx needed?
 			//ovr_SetControllerVibration(session, ovrControllerType_LTouch, 0.5f, 0.5f);
