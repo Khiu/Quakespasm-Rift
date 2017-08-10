@@ -450,12 +450,14 @@ static void RenderScreenForCurrentEye()
 void VR_UpdateScreenContent()
 {
 	int i;
-	vec3_t orientation;
+	vec3_t orientation, controllerOrientation;
 	ovrVector3f view_offset[2];
 	ovrPosef render_pose[2];
 
 	double ftiming, pose_time;
-	ovrTrackingState hmdState;
+	ovrTrackingState trackingState;
+	//ovrPosef         handPoses[2]; khiu
+	//ovrInputState    inputState; khiu
 
 	ovrViewScaleDesc viewScaleDesc;
 	ovrLayerEyeFov ld;
@@ -475,38 +477,10 @@ void VR_UpdateScreenContent()
 	// Get current orientation of the HMD
 	ftiming = ovr_GetPredictedDisplayTime(session, 0);
 	pose_time = ovr_GetTimeInSeconds();
-	hmdState = ovr_GetTrackingState(session, ftiming, false);
-
-	// Khiu - show controller data on screen
-	SCR_CenterPrint("TEST_CENTER");
-	Sys_Printf("TEST_SYS");
-
-	ovrPosef         handPoses[2];
-	ovrInputState    inputState;
-
-	handPoses[ovrHand_Left] = hmdState.HandPoses[ovrHand_Left].ThePose;
-	handPoses[ovrHand_Right] = hmdState.HandPoses[ovrHand_Right].ThePose;
-
-	// Left controller orientation
-	Con_Printf("Left Orientation W: %f ", handPoses[ovrHand_Left].Orientation.w);
-	Con_Printf("Left Orientation X: %f ", handPoses[ovrHand_Left].Orientation.x);
-	Con_Printf("Left Orientation Y: %f ", handPoses[ovrHand_Left].Orientation.y);
-	Con_Printf("Left Orientation Z: %f ", handPoses[ovrHand_Left].Orientation.z);
-	Con_Printf("Left Position X: %f ", handPoses[ovrHand_Left].Position.x);
-	Con_Printf("Left Position Y: %f ", handPoses[ovrHand_Left].Position.y);
-	Con_Printf("Left Position Z: %f ", handPoses[ovrHand_Left].Position.z);
-
-	// Right controller
-	Con_Printf("Left Orientation W: %f ", handPoses[ovrHand_Right].Orientation.w);
-	Con_Printf("Left Orientation X: %f ", handPoses[ovrHand_Right].Orientation.x);
-	Con_Printf("Left Orientation Y: %f ", handPoses[ovrHand_Right].Orientation.y);
-	Con_Printf("Left Orientation Z: %f ", handPoses[ovrHand_Right].Orientation.z);
-	Con_Printf("Left Position X: %f ", handPoses[ovrHand_Right].Position.x);
-	Con_Printf("Left Position Y: %f ", handPoses[ovrHand_Right].Position.y);
-	Con_Printf("Left Position Z: %f ", handPoses[ovrHand_Right].Position.z);
+	trackingState = ovr_GetTrackingState(session, ftiming, false);
 
 	// Calculate HMD angles and blend with input angles based on current aim mode
-	QuatToYawPitchRoll(hmdState.HeadPose.ThePose.Orientation, orientation);
+	QuatToYawPitchRoll(trackingState.HeadPose.ThePose.Orientation, orientation);
 	switch( (int)vr_aimmode.value )
 	{
 		// 1: (Default) Head Aiming; View YAW is mouse+head, PITCH is head
@@ -560,6 +534,35 @@ void VR_UpdateScreenContent()
 				cl.viewangles[PITCH]  = orientation[PITCH];
 			}
 			break;
+
+		// Decoupled aiming; should be used with motion controllers
+		case VR_AIMMODE_DECOUPLED:
+			cl.viewangles[PITCH] = orientation[PITCH];
+			cl.viewangles[YAW] = orientation[YAW];
+			// ROLL is set below
+
+			cl.viewent.origin[0] = -trackingState.HandPoses[ovrHand_Right].ThePose.Position.z * meters_to_units;
+			cl.viewent.origin[1] = -trackingState.HandPoses[ovrHand_Right].ThePose.Position.x * meters_to_units;
+			cl.viewent.origin[2] = trackingState.HandPoses[ovrHand_Right].ThePose.Position.y * meters_to_units;
+
+			QuatToYawPitchRoll(trackingState.HandPoses[ovrHand_Right].ThePose.Orientation, controllerOrientation);
+			cl.viewent.angles[YAW] = controllerOrientation[YAW];
+			cl.viewent.angles[PITCH] = controllerOrientation[PITCH];
+			cl.viewent.angles[ROLL] = controllerOrientation[ROLL];
+			
+			//VectorCopy(cl.viewent.angles, cl.aimangles);
+
+			// set cl.viewent.previousxxx needed?
+			//ovr_SetControllerVibration(session, ovrControllerType_LTouch, 0.5f, 0.5f);
+
+			//cl.viewent.currentangles = controllerOrientation; ?
+
+			// Khiu - draw line from controllers
+			//vec3_t startController;
+			//startController[0] =
+			//startController[1] =
+			//startController[2] =
+			break;
 	}
 	cl.viewangles[ROLL]  = orientation[ROLL];
 
@@ -574,7 +577,7 @@ void VR_UpdateScreenContent()
 	view_offset[0] = eyes[0].render_desc.HmdToEyeOffset;
 	view_offset[1] = eyes[1].render_desc.HmdToEyeOffset;
 
-	ovr_CalcEyePoses(hmdState.HeadPose.ThePose, view_offset, render_pose);
+	ovr_CalcEyePoses(trackingState.HeadPose.ThePose, view_offset, render_pose);
 	eyes[0].pose = render_pose[0];
 	eyes[1].pose = render_pose[1];
 
