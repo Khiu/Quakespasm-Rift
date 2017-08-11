@@ -456,8 +456,8 @@ void VR_UpdateScreenContent()
 
 	double ftiming, pose_time;
 	ovrTrackingState trackingState;
-	//ovrPosef         handPoses[2]; khiu
-	//ovrInputState    inputState; khiu
+	//ovrPosef         handPoses[2]; // Khiu
+	ovrInputState    inputState; // Khiu
 
 	ovrViewScaleDesc viewScaleDesc;
 	ovrLayerEyeFov ld;
@@ -541,9 +541,9 @@ void VR_UpdateScreenContent()
 			cl.viewangles[YAW] = orientation[YAW];
 			// ROLL is set below
 
-			cl.viewent.origin[0] = -trackingState.HandPoses[ovrHand_Right].ThePose.Position.z * meters_to_units;
-			cl.viewent.origin[1] = -trackingState.HandPoses[ovrHand_Right].ThePose.Position.x * meters_to_units;
-			cl.viewent.origin[2] = trackingState.HandPoses[ovrHand_Right].ThePose.Position.y * meters_to_units;
+			cl.viewent.origin[0] = cl_entities[cl.viewentity].origin[0] + (-trackingState.HandPoses[ovrHand_Right].ThePose.Position.z * meters_to_units);
+			cl.viewent.origin[1] = cl_entities[cl.viewentity].origin[1] + (-trackingState.HandPoses[ovrHand_Right].ThePose.Position.x * meters_to_units);
+			cl.viewent.origin[2] = cl_entities[cl.viewentity].origin[2] + (trackingState.HandPoses[ovrHand_Right].ThePose.Position.y * meters_to_units);
 
 			QuatToYawPitchRoll(trackingState.HandPoses[ovrHand_Right].ThePose.Orientation, controllerOrientation);
 			cl.viewent.angles[YAW] = controllerOrientation[YAW];
@@ -552,7 +552,22 @@ void VR_UpdateScreenContent()
 			
 			VectorCopy(cl.viewent.angles, cl.aimangles);
 
-			
+			if (OVR_SUCCESS(ovr_GetInputState(session, ovrControllerType_Touch, &inputState)))
+			{
+				if (inputState.Buttons & ovrButton_A)
+				{
+					Key_Event(K_LTHUMB, true);
+				}
+				if (inputState.Buttons & ovrButton_B)
+				{
+					Key_Event(K_MOUSE1, true);
+					Key_Event(K_MOUSE1, false);
+				}
+				if (inputState.HandTrigger[ovrHand_Left] > 0.5f)
+				{
+					Key_Event(K_RTRIGGER, true);
+				}
+			}
 
 			// set cl.viewent.previousxxx needed?
 			//ovr_SetControllerVibration(session, ovrControllerType_LTouch, 0.5f, 0.5f);

@@ -793,12 +793,12 @@ void V_CalcRefdef (void)
 	V_BoundOffsets ();
 
 // set up gun position
-	VectorCopy (cl.aimangles, view->angles);
+	//VectorCopy (cl.aimangles, view->angles); Khiu - should be a check for aimmode 7
 
 	CalcGunAngle ();
 
-	VectorCopy (ent->origin, view->origin);
-	view->origin[2] += cl.viewheight;
+	//VectorCopy (ent->origin, view->origin); Khiu - same
+	view->origin[2] += cl.viewheight; // should also be in a the check?
 
 	for (i=0 ; i<3 ; i++)
 		view->origin[i] += forward[i]*bob*0.4;
