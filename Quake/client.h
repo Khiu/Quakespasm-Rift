@@ -168,6 +168,8 @@ typedef struct
 
 	vec3_t		aimangles;
 
+	vec3_t		moveangles;		// seprate movement angles for use with motion controllers
+
 	vec3_t		mvelocity[2];	// update by server, used for lean+bob
 								// (0 is newest)
 	vec3_t		velocity;		// lerped between mvelocity[0] and [1]

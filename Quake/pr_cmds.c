@@ -1342,6 +1342,7 @@ static void PF_aim (void)
 	(void) speed; /* variable set but not used */
 
 	VectorCopy (ent->v.origin, start);
+	//VectorCopy(cl.viewent.origin, start); KHIU doesnt work
 	start[2] += 20;
 
 // try sending a trace straight

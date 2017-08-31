@@ -1,6 +1,7 @@
 // 2016 Dominic Szablewski - phoboslab.org
 
 #include "quakedef.h"
+#include "OVR_CAPI_GL.h"
 
 #ifndef __R_VR_H
 #define __R_VR_H
@@ -30,5 +31,9 @@ void VR_AddOrientationToViewAngles(vec3_t angles);
 void VR_SetAngles(vec3_t angles);
 void VR_ResetOrientation();
 void VR_SetMatrices();
+
+void IN_TouchMove(usercmd_t *cmd);
+void VR_SetTouchVibration(qboolean touchVibrationActive);
+void VR_GetTouchOrientation(ovrHandType hand, vec3_t angle);
 
 #endif

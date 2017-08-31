@@ -83,6 +83,10 @@ extern void SCR_DrawFPS (void);
 extern void SCR_DrawClock (void);
 extern void SCR_DrawConsole (void);
 
+// Touch controller - Khiu
+static ovrInputState inputState;
+static int touchVibrationLength = 0;
+
 // rendering
 extern void R_SetupView(void);
 extern void R_RenderScene(void);
@@ -90,7 +94,7 @@ extern int glx, gly, glwidth, glheight;
 extern refdef_t r_refdef;
 extern vec3_t vright;
 
-
+static ovrTrackingState trackingState;
 static ovrSession session;
 static ovrHmdDesc hmd;
 
@@ -450,14 +454,11 @@ static void RenderScreenForCurrentEye()
 void VR_UpdateScreenContent()
 {
 	int i;
-	vec3_t orientation, controllerOrientation;
+	vec3_t orientation, aimControllerOrientation, moveControllerOrientation, controllerOrientation; // controllerOrientation needs to be fased out
 	ovrVector3f view_offset[2];
 	ovrPosef render_pose[2];
 
 	double ftiming, pose_time;
-	ovrTrackingState trackingState;
-	//ovrPosef         handPoses[2]; // Khiu
-	ovrInputState    inputState; // Khiu
 
 	ovrViewScaleDesc viewScaleDesc;
 	ovrLayerEyeFov ld;
@@ -541,44 +542,74 @@ void VR_UpdateScreenContent()
 			cl.viewangles[YAW] = orientation[YAW];
 			// ROLL is set below
 
+			// Set the weapon position to the position of the right controller and relative to the player position
 			cl.viewent.origin[0] = cl_entities[cl.viewentity].origin[0] + (-trackingState.HandPoses[ovrHand_Right].ThePose.Position.z * meters_to_units);
 			cl.viewent.origin[1] = cl_entities[cl.viewentity].origin[1] + (-trackingState.HandPoses[ovrHand_Right].ThePose.Position.x * meters_to_units);
-			cl.viewent.origin[2] = cl_entities[cl.viewentity].origin[2] + (trackingState.HandPoses[ovrHand_Right].ThePose.Position.y * meters_to_units);
-
+			cl.viewent.origin[2] = (cl_entities[cl.viewentity].origin[2] + (trackingState.HandPoses[ovrHand_Right].ThePose.Position.y * meters_to_units)) + cl.viewheight; // Don't forget to add the viewheight
+			
+			// Set the weapon orientation to the orientation of the right controller
 			QuatToYawPitchRoll(trackingState.HandPoses[ovrHand_Right].ThePose.Orientation, controllerOrientation);
 			cl.viewent.angles[YAW] = controllerOrientation[YAW];
 			cl.viewent.angles[PITCH] = controllerOrientation[PITCH];
-			cl.viewent.angles[ROLL] = controllerOrientation[ROLL];
+			cl.viewent.angles[ROLL] = 0.0f; // ROLL is weird
+
+			// Set the movement orientation to the orientation of the controller
+			VR_GetTouchOrientation(ovrHand_Right, moveControllerOrientation);
+			VectorCopy(moveControllerOrientation, cl.moveangles);
 			
+			// Copy the weapon angles to the aimangles > no no
 			VectorCopy(cl.viewent.angles, cl.aimangles);
 
+			// Reduce vibration length each frame and disable if 0
+			if (touchVibrationLength > 0)
+			{
+				touchVibrationLength--;
+			}
+			else if (touchVibrationLength <= 0)
+			{
+				VR_SetTouchVibration(false);
+			}
+
+			// Touch button mapping in lazy mode
 			if (OVR_SUCCESS(ovr_GetInputState(session, ovrControllerType_Touch, &inputState)))
 			{
 				if (inputState.Buttons & ovrButton_A)
 				{
-					Key_Event(K_LTHUMB, true);
+					Key_Event(K_MWHEELDOWN, true);
+					Key_Event(K_MWHEELDOWN, false);
 				}
 				if (inputState.Buttons & ovrButton_B)
+				{
+					Key_Event(K_MWHEELUP, true);
+					Key_Event(K_MWHEELUP, false);
+				}
+				if (inputState.HandTrigger[ovrHand_Right] > 0.5f)
+				{
+					Key_Event(SDLK_SPACE, true);
+					Key_Event(SDLK_SPACE, false);
+				}
+				if (inputState.IndexTrigger[ovrHand_Right] > 0.5f)
 				{
 					Key_Event(K_MOUSE1, true);
 					Key_Event(K_MOUSE1, false);
 				}
-				if (inputState.HandTrigger[ovrHand_Left] > 0.5f)
+				/*if (inputState.Thumbstick[ovrHand_Right].y < 0.0f)
 				{
-					Key_Event(K_RTRIGGER, true);
+					Key_Event(SDLK_s, true);
+					Key_Event(SDLK_s, false);
 				}
+				if (inputState.Thumbstick[ovrHand_Right].x > 0.0f)
+				{
+					Key_Event(SDLK_d, true);
+					Key_Event(SDLK_d, false);
+				}
+				if (inputState.Thumbstick[ovrHand_Right].x < 0.0f)
+				{
+					Key_Event(SDLK_a, true);
+					Key_Event(SDLK_a, false);
+				}*/
 			}
-
-			// set cl.viewent.previousxxx needed?
-			//ovr_SetControllerVibration(session, ovrControllerType_LTouch, 0.5f, 0.5f);
-
-			//cl.viewent.currentangles = controllerOrientation; ?
-
-			// Khiu - draw line from controllers
-			//vec3_t startController;
-			//startController[0] =
-			//startController[1] =
-			//startController[2] =
+			
 			break;
 	}
 	cl.viewangles[ROLL]  = orientation[ROLL];
@@ -897,4 +928,29 @@ void VR_ResetOrientation()
 		ovr_RecenterTrackingOrigin(session);
 		VectorCopy(cl.aimangles,lastAim);
 	}
+}
+
+// Touch thumbstick movement
+void IN_TouchMove(usercmd_t *cmd)
+{
+	cmd->sidemove += (cl_sidespeed.value * inputState.Thumbstick[ovrHand_Right].x);
+	cmd->forwardmove += (cl_forwardspeed.value * inputState.Thumbstick[ovrHand_Right].y);
+}
+
+void VR_SetTouchVibration(qboolean touchVibrationActive)
+{
+	if (touchVibrationActive == true)
+	{
+		ovr_SetControllerVibration(session, ovrControllerType_RTouch, 0.5f, 0.5f);
+		touchVibrationLength = 30;
+	}
+	else if (touchVibrationActive == false)
+	{
+		ovr_SetControllerVibration(session, ovrControllerType_RTouch, 0.0f, 0.0f);
+	}
+}
+
+void VR_GetTouchOrientation(ovrHandType hand, vec3_t angle)
+{
+	QuatToYawPitchRoll(trackingState.HandPoses[hand].ThePose.Orientation, angle);
 }

@@ -458,7 +458,7 @@ void SV_ReadClientMove (usercmd_t *move)
 			angle[i] = MSG_ReadAngle16 ();
 		//johnfitz
 
-	VectorCopy (angle, host_client->edict->v.v_angle);
+	VectorCopy (angle, host_client->edict->v.v_angle); // Khiu aimangle?
 
 // read movement
 	move->forwardmove = MSG_ReadShort ();

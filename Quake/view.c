@@ -312,23 +312,29 @@ void V_ParseDamage (void)
 		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 0;
 	}
 
+	// Khiu - vibrate touch controllers
+	VR_SetTouchVibration(true);
+
 //
 // calculate view angle kicks
 //
-	ent = &cl_entities[cl.viewentity];
+	if (!vr_enabled.value)
+	{
+		ent = &cl_entities[cl.viewentity];
 
-	VectorSubtract (from, ent->origin, from);
-	VectorNormalize (from);
+		VectorSubtract(from, ent->origin, from);
+		VectorNormalize(from);
 
-	AngleVectors (ent->angles, forward, right, up);
+		AngleVectors(ent->angles, forward, right, up);
 
-	side = DotProduct (from, right);
-	v_dmg_roll = count*side*v_kickroll.value;
+		side = DotProduct(from, right);
+		v_dmg_roll = count*side*v_kickroll.value;
 
-	side = DotProduct (from, forward);
-	v_dmg_pitch = count*side*v_kickpitch.value;
+		side = DotProduct(from, forward);
+		v_dmg_pitch = count*side*v_kickpitch.value;
 
-	v_dmg_time = v_kicktime.value;
+		v_dmg_time = v_kicktime.value;
+	}
 }
 
 
@@ -797,8 +803,8 @@ void V_CalcRefdef (void)
 
 	CalcGunAngle ();
 
-	//VectorCopy (ent->origin, view->origin); Khiu - same
-	view->origin[2] += cl.viewheight; // should also be in a the check?
+	//VectorCopy (ent->origin, view->origin); Khiu - should be a check for aimmode 7
+	//view->origin[2] += cl.viewheight; // should also be in a the check? yes this needs to be done in vr.c
 
 	for (i=0 ; i<3 ; i++)
 		view->origin[i] += forward[i]*bob*0.4;

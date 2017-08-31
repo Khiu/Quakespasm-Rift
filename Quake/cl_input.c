@@ -361,7 +361,7 @@ void CL_SendMove (const usercmd_t *cmd)
 	for (i=0 ; i<3 ; i++)
 		//johnfitz -- 16-bit angles for PROTOCOL_FITZQUAKE
 		if (cl.protocol == PROTOCOL_NETQUAKE)
-			MSG_WriteAngle (&buf, cl.aimangles[i]);
+			MSG_WriteAngle (&buf, cl.aimangles[i]); // KHIU setting this to moveangle also influences the aimangle
 		else
 			MSG_WriteAngle16 (&buf, cl.aimangles[i]);
 		//johnfitz
