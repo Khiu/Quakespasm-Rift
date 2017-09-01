@@ -69,6 +69,7 @@ extern	int			in_forward, in_forward2, in_back;
 vec3_t	v_punchangles[2]; //johnfitz -- copied from cl.punchangle.  0 is current, 1 is previous value. never the same unless map just loaded
 
 extern cvar_t vr_enabled;
+extern cvar_t vr_aimmode;
 
 /*
 ===============
@@ -799,12 +800,18 @@ void V_CalcRefdef (void)
 	V_BoundOffsets ();
 
 // set up gun position
-	//VectorCopy (cl.aimangles, view->angles); Khiu - should be a check for aimmode 7
-
+	if ((int)vr_aimmode.value != VR_AIMMODE_DECOUPLED)
+	{
+		VectorCopy(cl.aimangles, view->angles); // Khiu - TEST
+	}
+	
 	CalcGunAngle ();
 
-	//VectorCopy (ent->origin, view->origin); Khiu - should be a check for aimmode 7
-	//view->origin[2] += cl.viewheight; // should also be in a the check? yes this needs to be done in vr.c
+	if ((int)vr_aimmode.value != VR_AIMMODE_DECOUPLED)
+	{
+		VectorCopy (ent->origin, view->origin); //Khiu - TEST
+		view->origin[2] += cl.viewheight;
+	}
 
 	for (i=0 ; i<3 ; i++)
 		view->origin[i] += forward[i]*bob*0.4;
