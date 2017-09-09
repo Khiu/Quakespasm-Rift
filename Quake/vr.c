@@ -550,15 +550,15 @@ void VR_UpdateScreenContent()
 			// Set the weapon orientation to the orientation of the right controller
 			QuatToYawPitchRoll(trackingState.HandPoses[ovrHand_Right].ThePose.Orientation, controllerOrientation);
 			cl.viewent.angles[YAW] = controllerOrientation[YAW];
-			cl.viewent.angles[PITCH] = controllerOrientation[PITCH];
-			cl.viewent.angles[ROLL] = 0.0f; // ROLL is weird
+			cl.viewent.angles[PITCH] = -controllerOrientation[PITCH];
+			cl.viewent.angles[ROLL] = 0.0f; // ROLL is weird, this doesnt fix it
 
 			// Set the movement orientation to the orientation of the controller
 			VR_GetTouchOrientation(ovrHand_Right, moveControllerOrientation);
 			VectorCopy(moveControllerOrientation, cl.moveangles);
 			
-			// Copy the weapon angles to the aimangles > no no
-			VectorCopy(cl.viewent.angles, cl.aimangles);
+			// Set aimangles to the orientation of the controller
+			VectorCopy(controllerOrientation, cl.aimangles);
 
 			// Reduce vibration length each frame and disable if 0
 			if (touchVibrationLength > 0)

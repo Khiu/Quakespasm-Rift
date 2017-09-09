@@ -802,14 +802,11 @@ void V_CalcRefdef (void)
 // set up gun position
 	if ((int)vr_aimmode.value != VR_AIMMODE_DECOUPLED)
 	{
-		VectorCopy(cl.aimangles, view->angles); // Khiu - TEST
-	}
+		VectorCopy(cl.aimangles, view->angles);
 	
-	CalcGunAngle ();
+		CalcGunAngle ();
 
-	if ((int)vr_aimmode.value != VR_AIMMODE_DECOUPLED)
-	{
-		VectorCopy (ent->origin, view->origin); //Khiu - TEST
+		VectorCopy (ent->origin, view->origin);
 		view->origin[2] += cl.viewheight;
 	}
 

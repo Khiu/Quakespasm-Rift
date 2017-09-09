@@ -735,7 +735,7 @@ void IN_Move(usercmd_t *cmd)
 {
 	IN_JoyMove(cmd);
 	IN_MouseMove(cmd);
-	IN_TouchMove(cmd); // Khiu - TEST
+	IN_TouchMove(cmd);
 }
 
 void IN_ClearStates (void)
