@@ -562,7 +562,9 @@ void VR_UpdateScreenContent()
 			QuatToYawPitchRoll(trackingState.HandPoses[selectedHand].ThePose.Orientation, controllerOrientation);
 			cl.viewent.angles[YAW] = controllerOrientation[YAW];
 			cl.viewent.angles[PITCH] = -controllerOrientation[PITCH];
-			cl.viewent.angles[ROLL] = 0.0f; // ROLL is weird, this doesnt fix it
+			cl.viewent.angles[ROLL] = 0.0f; // ROLL is weird, this alone doesn't fix it
+			controllerOrientation[ROLL] = -controllerOrientation[ROLL]; // TEST
+
 
 			// Set the movement orientation to the orientation of the controller
 			VR_GetTouchOrientation(selectedHand, controllerOrientation);
