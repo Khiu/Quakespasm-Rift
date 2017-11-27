@@ -460,6 +460,9 @@ void VR_UpdateScreenContent()
 	ovrVector3f view_offset[2];
 	ovrPosef render_pose[2];
 
+	ovrInputState lastInputState;
+	float triggerThreshold = 0.5f;
+
 	double ftiming, pose_time;
 
 	ovrViewScaleDesc viewScaleDesc;
@@ -583,32 +586,51 @@ void VR_UpdateScreenContent()
 				VR_SetTouchVibration(false);
 			}
 
-			// Touch button mapping in lazy mode
+			// Touch button input, no repeating
 			if (OVR_SUCCESS(ovr_GetInputState(session, ovrControllerType_Touch, &inputState)))
 			{
-				if (inputState.Buttons & ovrButton_A || ovrButton_X)
+				if ((inputState.Buttons && (ovrButton_A || ovrButton_X)) && !(lastInputState.Buttons && (ovrButton_A || ovrButton_X)))
 				{
 					Key_Event(K_MWHEELDOWN, true);
+				}
+				if (!(inputState.Buttons && (ovrButton_A || ovrButton_X)) && (lastInputState.Buttons && (ovrButton_A || ovrButton_X)))
+				{
 					Key_Event(K_MWHEELDOWN, false);
 				}
-				if (inputState.Buttons & ovrButton_B || ovrButton_Y)
+
+				if ((inputState.Buttons && (ovrButton_B || ovrButton_Y)) && !(lastInputState.Buttons && (ovrButton_B || ovrButton_Y)))
 				{
 					Key_Event(K_MWHEELUP, true);
+				}
+				if (!(inputState.Buttons && (ovrButton_B || ovrButton_Y)) && (lastInputState.Buttons && (ovrButton_B || ovrButton_Y)))
+				{
 					Key_Event(K_MWHEELUP, false);
 				}
-				if (inputState.HandTrigger[selectedHand] > 0.5f)
+
+				if ((inputState.HandTrigger[selectedHand] > triggerThreshold) && !(lastInputState.HandTrigger[selectedHand] > triggerThreshold))
 				{
 					Key_Event(SDLK_SPACE, true);
+				}
+				if (!(inputState.HandTrigger[selectedHand] > triggerThreshold) && (lastInputState.HandTrigger[selectedHand] > triggerThreshold))
+				{
 					Key_Event(SDLK_SPACE, false);
 				}
-				if (inputState.IndexTrigger[selectedHand] > 0.5f)
+
+				if ((inputState.IndexTrigger[selectedHand] > triggerThreshold) && !(lastInputState.IndexTrigger[selectedHand] > triggerThreshold))
 				{
 					Key_Event(K_MOUSE1, true);
+				}
+				if (!(inputState.IndexTrigger[selectedHand] > triggerThreshold) && (lastInputState.IndexTrigger[selectedHand] > triggerThreshold))
+				{
 					Key_Event(K_MOUSE1, false);
 				}
+
+				memcpy(&lastInputState, &inputState, sizeof(ovrInputState));
 			}			
 			break;
 	}
+	memset(&lastInputState, 0, sizeof(ovrInputState));
+
 	cl.viewangles[ROLL]  = orientation[ROLL];
 
 	VectorCopy (orientation, lastOrientation);
