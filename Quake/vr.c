@@ -85,6 +85,7 @@ extern void SCR_DrawConsole (void);
 
 // Touch controller - Khiu
 static ovrInputState inputState;
+static ovrInputState lastInputState;
 static int touchVibrationLength = 0;
 
 // rendering
@@ -456,11 +457,10 @@ static void RenderScreenForCurrentEye()
 void VR_UpdateScreenContent()
 {
 	int i;
-	vec3_t orientation, controllerOrientation; // controllerOrientation needs to be fased out
+	vec3_t orientation, controllerOrientation;
 	ovrVector3f view_offset[2];
 	ovrPosef render_pose[2];
 
-	ovrInputState lastInputState;
 	float triggerThreshold = 0.5f;
 
 	double ftiming, pose_time;
@@ -563,11 +563,10 @@ void VR_UpdateScreenContent()
 			
 			// Set the weapon orientation to the orientation of the controller
 			QuatToYawPitchRoll(trackingState.HandPoses[selectedHand].ThePose.Orientation, controllerOrientation);
+			controllerOrientation[ROLL] = -controllerOrientation[ROLL]; // TEST
 			cl.viewent.angles[YAW] = controllerOrientation[YAW];
 			cl.viewent.angles[PITCH] = -controllerOrientation[PITCH];
 			cl.viewent.angles[ROLL] = 0.0f; // ROLL is weird, this alone doesn't fix it
-			controllerOrientation[ROLL] = -controllerOrientation[ROLL]; // TEST
-
 
 			// Set the movement orientation to the orientation of the controller
 			VR_GetTouchOrientation(selectedHand, controllerOrientation);
@@ -625,11 +624,10 @@ void VR_UpdateScreenContent()
 					Key_Event(K_MOUSE1, false);
 				}
 
-				memcpy(&lastInputState, &inputState, sizeof(ovrInputState));
+				lastInputState = inputState;
 			}			
 			break;
 	}
-	memset(&lastInputState, 0, sizeof(ovrInputState));
 
 	cl.viewangles[ROLL]  = orientation[ROLL];
 
@@ -958,14 +956,25 @@ void IN_TouchMove(usercmd_t *cmd)
 
 void VR_SetTouchVibration(qboolean touchVibrationActive)
 {
+	ovrControllerType vibrateHand;
+
+	if ((int)vr_lefthanded.value == 1)
+	{
+		vibrateHand = ovrControllerType_LTouch;
+	}
+	else
+	{
+		vibrateHand = ovrControllerType_RTouch;
+	}
+
 	if (touchVibrationActive == true)
 	{
-		ovr_SetControllerVibration(session, ovrControllerType_RTouch, 0.5f, 0.5f);
+		ovr_SetControllerVibration(session, vibrateHand, 0.5f, 0.5f);
 		touchVibrationLength = 30;
 	}
 	else if (touchVibrationActive == false)
 	{
-		ovr_SetControllerVibration(session, ovrControllerType_RTouch, 0.0f, 0.0f);
+		ovr_SetControllerVibration(session, vibrateHand, 0.0f, 0.0f);
 	}
 }
 
