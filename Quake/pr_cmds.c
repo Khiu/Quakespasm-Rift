@@ -1341,9 +1341,9 @@ static void PF_aim (void)
 	speed = G_FLOAT(OFS_PARM1);
 	(void) speed; /* variable set but not used */
 
-	VectorCopy (ent->v.origin, start);
-	//VectorCopy(cl.viewent.origin, start); KHIU doesnt work
-	start[2] += 20;
+	//VectorCopy (ent->v.origin, start);
+	VectorCopy(cl.viewent.origin, start); // KHIU Testing aim not projectile origin
+	//start[2] += 20;
 
 // try sending a trace straight
 	VectorCopy (pr_global_struct->v_forward, dir);
