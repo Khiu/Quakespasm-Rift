@@ -31,3 +31,4 @@ The release version comes with a sensible `config.cfg` and `autoexec.cfg` file t
 - `vr_deadzone` – Deadzone in degrees for `vr_aimmode 5`. Default 30.
 - `vr_perfhud`- – Show the Oculus Performance Hud (1-5). Default 0.
 - `snd_device` – Search string for the audio output device to use. Default: "default". This will get set automatically to the Oculus "Rift Audio" when `vr_enabled` is 1
+rsthrsdhrsthrth
